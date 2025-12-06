@@ -184,3 +184,54 @@ def save_augmented_data(df: pd.DataFrame, output_folder: str):
                     f.write(line)
 
     print(f"Augmented data saved to: {output_folder}")
+
+
+if __name__ == "__main__":
+    # 원본 데이터 로드
+    from dataset import load_data, load_folders_and_build_features
+    
+    print("🔄 원본 데이터 로딩 중...")
+    original_dfs = []
+    for folder in ["data1", "data2"]:
+        df = load_data(folder)
+        original_dfs.append(df)
+        print(f"  {folder}: {len(df['data_id'].unique())}개 샘플")
+    
+    original_df = pd.concat(original_dfs, ignore_index=True)
+    print(f"총 원본 데이터: {len(original_df['data_id'].unique())}개 샘플")
+    
+    # 증강 설정
+    augmentation_methods = [
+        {"method": "time_warp", "warp_factor": 1.5},
+        {"method": "jitter", "sigma": 0.03},
+        {"method": "rotate", "angle_deg": 15, "axis": "z"},
+        {"method": "scale", "scale_factor": 1.2},
+        {"method": "shift", "shift_ratio": 0.1}
+    ]
+    
+    augment_per_method = 2  # 각 방법별로 2개씩 증강
+    
+    print(f"\n🚀 데이터 증강 시작...")
+    print(f"증강 방법: {[m['method'] for m in augmentation_methods]}")
+    print(f"방법별 증강 수: {augment_per_method}")
+    
+    # 데이터 증강
+    augmented_df = augment_dataframe(
+        original_df, 
+        augmentation_methods, 
+        augment_per_method=augment_per_method
+    )
+    
+    print(f"✅ 증강 완료!")
+    print(f"증강 후 데이터: {len(augmented_df['data_id'].unique())}개 샘플")
+    print(f"증강으로 생성된 데이터: {len(augmented_df['data_id'].unique()) - len(original_df['data_id'].unique())}개 샘플")
+    
+    # 파일 저장
+    output_folder = "augmented_data"
+    save_augmented_data(augmented_df, output_folder)
+    
+    print(f"\n📊 요약:")
+    print(f"원본 데이터: {len(original_df['data_id'].unique())}개")
+    print(f"증강 데이터: {len(augmented_df['data_id'].unique()) - len(original_df['data_id'].unique())}개")
+    print(f"전체 데이터: {len(augmented_df['data_id'].unique())}개")
+    print(f"증강률: {((len(augmented_df['data_id'].unique()) / len(original_df['data_id'].unique())) - 1) * 100:.1f}%")
